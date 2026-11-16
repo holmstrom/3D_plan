@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Ny Munkegade 80 · Indret selv</title>
   <link rel="icon" href="data:," />
-  <link rel="stylesheet" href="css/planner.css?v=4" />
+  <link rel="stylesheet" href="css/planner.css?v=5" />
   <script type="importmap">
     { "imports": { "three": "./lib/three.module.min.js" } }
   </script>
@@ -17,23 +17,42 @@
       <p>Indret selv · <a href="index.html">se rundturen</a></p>
     </header>
 
-    <div class="modes" role="tablist">
+    <div class="modes three" role="tablist">
       <button id="mode-plan" class="on">Plan</button>
+      <button id="mode-doll">3D-overblik</button>
       <button id="mode-walk">Gå rundt</button>
     </div>
     <p class="hint" id="hint"></p>
-    <label class="slider">Gennemsigtige vægge i "Gå rundt"
+    <label class="slider" id="walls-row">Gennemsigtige vægge i "Gå rundt"
       <span><input id="walls" type="range" min="0" max="80" step="5" value="20" /><b id="walls-val">20 %</b></span>
     </label>
+
+    <section class="card">
+      <h2>Version</h2>
+      <select id="layouts" aria-label="Vælg version"></select>
+      <div class="row tight">
+        <label class="grow"><input id="layout-name" type="text" maxlength="40" placeholder="Navn på ny version" aria-label="Navn på ny version" /></label>
+        <button id="layout-save" type="button">Gem som ny</button>
+      </div>
+      <p class="err" id="layout-err" hidden></p>
+      <p class="small" id="save-state">Gemmes automatisk i denne browser.</p>
+      <div class="btns">
+        <button id="export">Eksportér</button>
+        <button id="import">Importér</button>
+        <button id="reset">Nulstil</button>
+        <button id="layout-del" class="danger">Slet version</button>
+      </div>
+      <input id="import-file" type="file" accept="application/json,.json" hidden />
+    </section>
 
     <section id="sel" class="card" hidden>
       <h2 id="sel-name"></h2>
       <p id="sel-dims" class="dims"></p>
       <p id="sel-warn" class="warn" hidden>Overlapper en væg eller et andet møbel</p>
-      <div class="row" id="sel-size" hidden>
-        <label>B <input id="sel-w" type="number" min="5" max="600" step="1" /></label>
-        <label>D <input id="sel-d" type="number" min="2" max="600" step="1" /></label>
-        <label>H <input id="sel-h" type="number" min="1" max="250" step="1" /></label>
+      <div class="row" id="sel-size">
+        <label id="sel-w-l">Bredde, cm <input id="sel-w" type="number" step="1" /></label>
+        <label id="sel-d-l">Dybde, cm <input id="sel-d" type="number" step="1" /></label>
+        <label id="sel-h-l">Højde, cm <input id="sel-h" type="number" step="1" /></label>
       </div>
       <div class="btns">
         <button data-act="rot90" title="R">Drej 90°</button>
@@ -44,6 +63,12 @@
         <button data-act="dup" title="Ctrl+D">Kopiér</button>
         <button data-act="del" title="Delete" class="danger">Slet</button>
       </div>
+    </section>
+
+    <section class="card">
+      <h2>Rum</h2>
+      <table id="rooms" class="rooms"></table>
+      <label class="check"><input id="narrow" type="checkbox" checked /> Vis smalle passager (under 70 cm) på planen</label>
     </section>
 
     <section class="card">
@@ -70,14 +95,9 @@
     </section>
 
     <section class="card">
-      <h2>Indretning</h2>
-      <p class="small" id="save-state">Gemmes automatisk i denne browser.</p>
-      <div class="btns">
-        <button id="export">Eksportér</button>
-        <button id="import">Importér</button>
-        <button id="reset" class="danger">Nulstil til forslag</button>
-      </div>
-      <input id="import-file" type="file" accept="application/json,.json" hidden />
+      <h2>Farver pr. rum</h2>
+      <div id="colors"></div>
+      <p class="small">Vægfarven ses i 3D-overblik og Gå rundt. Gulvet ses i alle visninger.</p>
     </section>
   </aside>
 
@@ -88,6 +108,6 @@
     <div class="loading" id="loading">Tegner planen…</div>
   </main>
 
-  <script type="module" src="js/planner.js?v=4"></script>
+  <script type="module" src="js/planner.js?v=5"></script>
 </body>
 </html>

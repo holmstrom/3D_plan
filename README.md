@@ -15,12 +15,18 @@ A scroll-driven landing page for the apartment at Ny Munkegade. It opens on the 
 
 ## Indret selv (`planner.html`)
 
-A small planner on the same model:
+A planner on the same model, with three views:
 
 - **Plan:** drag furniture, turn it (R 90°, F 180°, Q/E 15°), mirror it (M), copy (Ctrl+D), delete. Arrow keys nudge 5 cm, with Shift 1 cm. The selected piece shows its size and the free distance to the nearest wall or furniture on each side, and turns red when it overlaps something.
-- **Insert:** pick from the catalogue, or add your own piece with name, width, depth and height in cm and an optional photo, which is shown on its front.
-- **Gå rundt:** walk through the rooms at eye height with W A S D or the arrow keys, drag to look around. Double-click the floor on the plan to stand there.
-- The layout is saved in the browser and can be exported to and imported from a JSON file.
+- **3D-overblik:** the apartment as a cut-open model. Drag to turn it, scroll to zoom, right-drag to move it. Furniture can be dragged here too.
+- **Gå rundt:** walk through the rooms at eye height with W A S D or the arrow keys, drag to look around, drag furniture along the floor. A slider makes the walls see-through.
+
+Other features:
+
+- **Insert:** pick from the catalogue, or add your own piece with name, width, depth and height in cm and an optional photo, shown on its front. Most catalogue pieces can be resized in the selection panel.
+- **Rum:** floor area and furnished share per room. On the plan, free floor that is only 35-70 cm wide is marked in orange.
+- **Versions:** several named layouts, saved in the browser. Each can be exported to and imported from a JSON file.
+- **Colours:** wall colour and floor tone per room.
 
 ## Run it
 

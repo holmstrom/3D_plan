@@ -15,6 +15,7 @@ export const INK_HEX = 0x1f1d1a;
 
 export const U = {
   uCut: { value: 1.2 },
+  uCapInk: { value: 1 },   // 1: cut faces are drawn as black ink, 0: in the material's own colour
   uRoomBox: { value: Array.from({ length: NR }, () => new THREE.Vector4(1e5, 1e5, -1e5, -1e5)) },
   uRoomP: { value: Array.from({ length: NR }, () => new THREE.Vector4(0, 0, 1, 0)) },
   uPaper: { value: srgb(PAPER_HEX) },
@@ -23,6 +24,7 @@ export const U = {
 
 const REVEAL = /* glsl */ `
 uniform float uCut;
+uniform float uCapInk;
 uniform vec4 uRoomBox[${NR}];
 uniform vec4 uRoomP[${NR}];
 uniform vec3 uPaper;
@@ -49,6 +51,7 @@ float revealAt(vec3 p){
 export function patch(mat) {
   mat.onBeforeCompile = (sh) => {
     sh.uniforms.uCut = U.uCut;
+    sh.uniforms.uCapInk = U.uCapInk;
     sh.uniforms.uRoomBox = U.uRoomBox;
     sh.uniforms.uRoomP = U.uRoomP;
     sh.uniforms.uPaper = U.uPaper;
@@ -78,7 +81,7 @@ export function patch(mat) {
          bool cap_ = vWPos.y > uCut - 0.004 && n_.y > 0.5;
          float tone_ = 0.93 + 0.07 * dot(n_, normalize(vec3(-0.35, 0.8, 0.45)));
          vec3 drawn_ = cap_ ? uInk : uPaper * tone_;
-         gl_FragColor.rgb = cap_ ? uInk : mix(drawn_, gl_FragColor.rgb, rv_);`
+         gl_FragColor.rgb = (cap_ && uCapInk > 0.5) ? uInk : mix(drawn_, gl_FragColor.rgb, rv_);`
       );
   };
   mat.polygonOffset = true;
