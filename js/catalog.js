@@ -1,8 +1,8 @@
 // Furniture catalogue for the planner. Every piece is built around its own
 // centre, front facing +z, sizes in metres. w = width (x), d = depth (z), h = height.
 import * as THREE from 'three';
-import { plainMat } from './materials.js';
-import { addMesh, bx, rbx, cyl, group, chair, trippTrapp, bookcase, dresser, bed, sofa, armchair, bike, plant } from './model.js';
+import { plainMat } from './materials.js?v=4';
+import { addMesh, bx, rbx, cyl, group, chair, trippTrapp, bookcase, dresser, bed, sofa, armchair, bike, plant } from './model.js?v=4';
 
 const legs = (g, mat, w, d, h, t = 0.02, inset = 0.04) => {
   [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {

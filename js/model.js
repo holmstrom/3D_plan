@@ -3,7 +3,7 @@
 // z = 0 is the garden facade (balcony, morning sun), z = 8.35 is the street.
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from '../lib/three-addons/RoundedBoxGeometry.js';
-import { lineMaterial, INK_HEX } from './materials.js';
+import { lineMaterial, INK_HEX } from './materials.js?v=4';
 
 export const H = 2.5;      // ceiling height
 export const EXT = 0.30;   // exterior wall thickness

@@ -2,9 +2,9 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from '../lib/three-addons/RoomEnvironment.js';
 import { RectAreaLightUniformsLib } from '../lib/three-addons/RectAreaLightUniformsLib.js';
-import { U, buildMaterials, PAPER_HEX } from './materials.js';
-import { buildApartment, H, W, D, EXT } from './model.js';
-import { CATALOG, byType, buildCustom, DEFAULT_LAYOUT } from './catalog.js';
+import { U, buildMaterials, PAPER_HEX } from './materials.js?v=4';
+import { buildApartment, H, W, D, EXT } from './model.js?v=4';
+import { CATALOG, byType, buildCustom, DEFAULT_LAYOUT } from './catalog.js?v=4';
 
 const STORE = 'nm80-layout-v1';
 const PLAN_CUT = 2.0;          // below the door heads, so door openings show on the plan
@@ -117,6 +117,7 @@ function place(it) {
   for (let i = 0; i < 5; i++) p.setXYZ(i, c[i % 4][0], PLAN_CUT + 0.01, c[i % 4][1]);
   p.needsUpdate = true;
   o.fp.visible = mode === 'plan';
+  o.group.updateMatrixWorld(true);
 }
 function build(it) {
   const old = live.get(it.id);
@@ -226,23 +227,25 @@ function refreshSelection() {
     $('#sel-w').value = cm(def.w); $('#sel-d').value = cm(def.d); $('#sel-h').value = cm(def.h);
   }
   const c = corners(selected), p = outlineGeo.attributes.position;
-  for (let i = 0; i < 5; i++) p.setXYZ(i, c[i % 4][0], PLAN_CUT + 0.02, c[i % 4][1]);
+  const oy = mode === 'plan' ? PLAN_CUT + 0.02 : 0.03;
+  for (let i = 0; i < 5; i++) p.setXYZ(i, c[i % 4][0], oy, c[i % 4][1]);
   p.needsUpdate = true;
   outline.material.color.set(bad ? 0xc0392b : 0x1f6feb);
-  outline.visible = mode === 'plan';
+  outline.visible = true;
 }
 
-function project(x, z) {
-  const v = new THREE.Vector3(x, PLAN_CUT, z).project(planCam);
+function project(x, z, y = PLAN_CUT) {
+  const v = new THREE.Vector3(x, y, z).project(mode === 'walk' ? walkCam : planCam);
+  if (v.z > 1 || v.z < -1) return null;
   return [(v.x * 0.5 + 0.5) * stage.clientWidth, (-v.y * 0.5 + 0.5) * stage.clientHeight];
 }
 function updateLabels() {
-  const show = selected && mode === 'plan';
   Object.values(labs).forEach((l) => { l.hidden = true; });
-  if (!show) return;
+  if (!selected) return;
+  const wk = mode === 'walk';
   const def = defOf(selected), cl = clearances(selected), b = cl.b;
-  const put = (el, x, z, text) => { const [px, py] = project(x, z); el.style.left = px + 'px'; el.style.top = py + 'px'; el.textContent = text; el.hidden = false; };
-  put(labs.dims, selected.x, selected.z, `${cm(def.w)} × ${cm(def.d)} cm`);
+  const put = (el, x, z, text, y) => { const q = project(x, z, y ?? (wk ? 0.05 : PLAN_CUT)); if (!q) return; el.style.left = q[0] + 'px'; el.style.top = q[1] + 'px'; el.textContent = text; el.hidden = false; };
+  put(labs.dims, selected.x, selected.z, `${cm(def.w)} × ${cm(def.d)} cm`, wk ? def.h + 0.12 : PLAN_CUT);
   labs.dims.classList.toggle('bad', collides(selected));
   const mz = (b.z0 + b.z1) / 2, mx = (b.x0 + b.x1) / 2;
   const ok = (v) => v != null && v > 0.03 && v < 6;
@@ -253,6 +256,13 @@ function updateLabels() {
 }
 
 function select(it) { selected = it; refreshSelection(); }
+let flashTimer = 0;
+function flash(text) {
+  const el = $('#toast');
+  el.textContent = text; el.hidden = false;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(() => { el.hidden = true; }, 5000);
+}
 
 // --- saving ----------------------------------------------------------------------
 let saveTimer = 0;
@@ -298,6 +308,22 @@ function applyWalkCam() {
   walkCam.position.set(walk.x, 1.6, walk.z);
   walkCam.lookAt(walk.x + Math.sin(y) * Math.cos(p), 1.6 + Math.sin(p), walk.z - Math.cos(y) * Math.cos(p));
 }
+// see-through walls while walking, so the next room and its furniture show through
+let wallT = 0.2;
+try { const v = parseFloat(localStorage.getItem(STORE + '-walls')); if (v >= 0 && v <= 0.8) wallT = v; } catch (e) { /* default */ }
+function applyWalls() {
+  const o = mode === 'walk' ? 1 - wallT : 1;
+  M.wall.transparent = o < 1;
+  M.wall.opacity = o;
+  M.wall.depthWrite = o >= 1;
+  $('#walls').value = Math.round(wallT * 100);
+  $('#walls-val').textContent = Math.round(wallT * 100) + ' %';
+}
+$('#walls').addEventListener('input', (ev) => {
+  wallT = Math.max(0, Math.min(0.8, +ev.target.value / 100));
+  try { localStorage.setItem(STORE + '-walls', String(wallT)); } catch (e) { /* not saved */ }
+  applyWalls();
+});
 function setMode(m) {
   mode = m;
   const w = m === 'walk';
@@ -312,9 +338,10 @@ function setMode(m) {
   roomLights.forEach((l) => { l.visible = w; });
   rectLights.forEach((l) => { l.visible = w; });
   $('#hint').textContent = w
-    ? 'Gå med W A S D eller piletasterne. Træk med musen for at se dig omkring. Hold Shift for at gå hurtigere.'
-    : 'Træk et møbel for at flytte det. Træk på gulvet for at flytte planen, rul for at zoome. Dobbeltklik på gulvet for at stå dér.';
+    ? 'Gå med W A S D eller piletasterne. Træk i et møbel for at flytte det, træk på væg eller gulv for at se dig omkring. R drejer, F vender det valgte møbel.'
+    : 'Klik på et møbel og træk for at flytte det. R drejer 90°, F vender. Træk på gulvet for at flytte planen, rul for at zoome. Dobbeltklik på gulvet for at stå dér.';
   canvas.style.cursor = w ? 'grab' : 'default';
+  applyWalls();
   items.forEach(place);
   refreshSelection();
 }
@@ -335,6 +362,14 @@ const ndc = new THREE.Vector2();
 function groundAt(ev) {
   const r = canvas.getBoundingClientRect();
   ndc.set(((ev.clientX - r.left) / r.width) * 2 - 1, -((ev.clientY - r.top) / r.height) * 2 + 1);
+  if (mode === 'walk') {
+    walkCam.updateMatrixWorld();
+    ray.setFromCamera(ndc, walkCam);
+    const o = ray.ray.origin, d = ray.ray.direction;
+    if (d.y > -0.02) return null;               // not pointing at the floor
+    const t = -o.y / d.y;
+    return t > 14 ? null : { x: o.x + d.x * t, z: o.z + d.z * t };
+  }
   ray.setFromCamera(ndc, planCam);
   return { x: ray.ray.origin.x, z: ray.ray.origin.z };
 }
@@ -350,7 +385,13 @@ const snap = (v, ev) => (ev.shiftKey ? v : Math.round(v / 0.05) * 0.05);
 let drag = null;
 canvas.addEventListener('pointerdown', (ev) => {
   canvas.setPointerCapture(ev.pointerId);
-  if (mode === 'walk') { drag = { kind: 'look', x: ev.clientX, y: ev.clientY }; canvas.style.cursor = 'grabbing'; return; }
+  if (mode === 'walk') {
+    const hit = itemAt(ev), gp = hit && groundAt(ev);
+    if (hit) select(hit);
+    drag = hit && gp ? { kind: 'item', dx: hit.x - gp.x, dz: hit.z - gp.z } : { kind: 'look', x: ev.clientX, y: ev.clientY };
+    canvas.style.cursor = 'grabbing';
+    return;
+  }
   const it = itemAt(ev);
   const g = groundAt(ev);
   if (it) { select(it); drag = { kind: 'item', dx: it.x - g.x, dz: it.z - g.z }; } else { select(null); drag = { kind: 'pan', x: ev.clientX, y: ev.clientY }; }
@@ -367,6 +408,7 @@ canvas.addEventListener('pointermove', (ev) => {
     applyPlanCam();
   } else if (selected) {
     const g = groundAt(ev);
+    if (!g) return;
     selected.x = Math.max(-1, Math.min(W + 1, snap(g.x + drag.dx, ev)));
     selected.z = Math.max(-2, Math.min(D + 1, snap(g.z + drag.dz, ev)));
     place(selected);
@@ -392,6 +434,7 @@ canvas.addEventListener('dblclick', (ev) => {
   if (blocked(g.x, g.z)) return;
   walk.x = g.x; walk.z = g.z;
   setMode('walk');
+  flash('Du står nu i lejligheden. Tryk Esc eller "Plan" for at komme tilbage.');
 });
 
 // --- actions -----------------------------------------------------------------------
@@ -419,10 +462,10 @@ const keys = new Set();
 addEventListener('keydown', (ev) => {
   if (ev.target.closest('input, textarea, select')) return;
   const k = ev.key.toLowerCase();
+  const map = { r: 'rot90', f: 'rot180', q: 'rotL', e: 'rotR', m: 'mirror', delete: 'del', backspace: 'del' };
+  if ((ev.ctrlKey || ev.metaKey) && k === 'd') { ev.preventDefault(); act('dup'); return; }
+  if (selected && map[k]) { ev.preventDefault(); act(map[k]); return; }
   if (mode === 'plan') {
-    const map = { r: 'rot90', f: 'rot180', q: 'rotL', e: 'rotR', m: 'mirror', delete: 'del', backspace: 'del' };
-    if ((ev.ctrlKey || ev.metaKey) && k === 'd') { ev.preventDefault(); act('dup'); return; }
-    if (map[k]) { ev.preventDefault(); act(map[k]); return; }
     if (selected && k.startsWith('arrow')) {
       ev.preventDefault();
       const s = ev.shiftKey ? 0.01 : 0.05;
@@ -432,7 +475,7 @@ addEventListener('keydown', (ev) => {
     }
     if (k === 'escape') select(null);
   } else {
-    if (k === 'escape') { setMode('plan'); return; }
+    if (k === 'escape') { if (selected) select(null); else setMode('plan'); return; }
     keys.add(k);
     if (k.startsWith('arrow') || k === ' ') ev.preventDefault();
   }
@@ -575,8 +618,9 @@ function frame(now) {
   renderer.render(scene, mode === 'walk' ? walkCam : planCam);
   requestAnimationFrame(frame);
 }
-const ready = new Promise((res) => { THREE.DefaultLoadingManager.onLoad = res; setTimeout(res, 12000); });
+requestAnimationFrame(frame);
+const ready = new Promise((res) => { THREE.DefaultLoadingManager.onLoad = res; setTimeout(res, 2500); });
 window.__planner = {
-  ready: ready.then(() => { requestAnimationFrame(frame); $('#loading').classList.add('done'); return true; }),
+  ready: ready.then(() => { $('#loading').classList.add('done'); return true; }),
   get items() { return items; }, get selected() { return selected; }, walk, view, setMode, project,
 };

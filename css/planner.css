@@ -57,3 +57,10 @@ input[type=file] { font-size: 11px; width: 100%; }
   .stage { height: 55vh; grid-row: 1; }
   .side { height: 45vh; grid-row: 2; border-right: 0; border-top: 1px solid var(--line); }
 }
+
+.toast { position: absolute; left: 50%; top: 18px; transform: translateX(-50%); padding: 8px 14px; background: var(--ink); color: var(--paper); font-size: 13px; z-index: 5; }
+
+.slider { display: grid; gap: 4px; font-size: 11px; color: var(--muted); margin-bottom: 12px; }
+.slider span { display: flex; align-items: center; gap: 8px; }
+.slider input { flex: 1; }
+.slider b { font-weight: 400; color: var(--ink); min-width: 38px; text-align: right; font-size: 12px; }
