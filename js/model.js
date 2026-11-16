@@ -73,8 +73,14 @@ export function buildApartment(M) {
   const ceilings = new THREE.Group();
   const outside = new THREE.Group();
   const doors = {};
+  const swap = {};
   const lights = [];
   root.add(hanging, ceilings);
+  // movable furniture lives in its own group, so the planner can replace it
+  const furn = new THREE.Group();
+  root.add(furn);
+  const fixedRoot = root;
+  const walls2d = [];
 
   // --- floors ---------------------------------------------------------------
   const floor = (mat, x0, x1, z0, z1, y = 0) => {
@@ -113,6 +119,7 @@ export function buildApartment(M) {
       if (s1 - s0 < 0.001 || y1 - y0 < 0.001) return;
       if (axis === 'x') bx(root, mat, s0, s1, y0, y1, t0, t1, { lines: 1 });
       else bx(root, mat, t0, t1, y0, y1, s0, s1, { lines: 1 });
+      if (y0 === 0) walls2d.push(axis === 'x' ? { x0: s0, x1: s1, z0: t0, z1: t1 } : { x0: t0, x1: t1, z0: s0, z1: s1 });
       if (y0 === 0 && mat === M.wall) {
         const o = { lines: 0, cast: false };
         if (axis === 'x') { bx(root, M.whitePaint, s0, s1, 0, 0.08, t0 - 0.012, t0, o); bx(root, M.whitePaint, s0, s1, 0, 0.08, t1, t1 + 0.012, o); }
@@ -259,6 +266,7 @@ export function buildApartment(M) {
   // dining table: oval, extended to 200 x 110, turned legs
   const tcx = 3.35, tcz = 1.10;
   {
+    const root = furn;
     const top = new THREE.CylinderGeometry(1, 1, 0.04, 64);
     top.scale(1.0, 1, 0.55);
     top.computeVertexNormals();
@@ -289,10 +297,10 @@ export function buildApartment(M) {
   }
   // six paper-cord chairs and the Tripp Trapp
   [2.82, 3.35, 3.88].forEach((x) => {
-    chair(group(root, x, 0.30, 0), M);
-    chair(group(root, x, 1.92, 180), M);
+    chair(group(furn, x, 0.30, 0), M);
+    chair(group(furn, x, 1.92, 180), M);
   });
-  trippTrapp(group(root, 4.58, 1.10, -90), M);
+  trippTrapp(group(furn, 4.58, 1.10, -90), M);
 
   // rattan pendant over the table
   {
@@ -322,9 +330,10 @@ export function buildApartment(M) {
   }
 
   // bookcase on the west wall, facing east
-  bookcase(group(root, 1.95, 0.72, 90), M, 1.10, 1.85);
+  bookcase(group(furn, 1.95, 0.72, 90), M, 1.10, 1.85);
   // desk with lamp and laptop, chair
   {
+    const root = furn;
     bx(root, M.oak, 1.80, 2.42, 0.71, 0.74, 2.70, 3.90, { lines: 0.6 });
     [[1.84, 2.74], [2.38, 2.74], [1.84, 3.86], [2.38, 3.86]].forEach(([x, z]) => bx(root, M.whitePaint, x - 0.02, x + 0.02, 0, 0.71, z - 0.02, z + 0.02, { lines: 0.3 }));
     // flowerpot-style lamp
@@ -341,8 +350,8 @@ export function buildApartment(M) {
     chair(group(root, 2.62, 3.25, -90), M);
   }
   // fig tree in a pot by the window
-  plant(root, M, 4.55, 0.35, 1.5);
-  curtain(root, M, 4.30, 4.66, 0.06);
+  plant(furn, M, 4.55, 0.35, 1.5);
+  curtain(fixedRoot, M, 4.30, 4.66, 0.06);
 
   // =========================================================================
   // BALCONY (x 3.40-6.40, z -1.60 to -0.30)
@@ -384,6 +393,7 @@ export function buildApartment(M) {
   // CHILD (x 6.60-9.35, z 0-3.95)
   // =========================================================================
   {
+    const root = furn;
     const g = group(root, 8.90, 0.25, 0);
     bed(g, M, 0.90, 2.00, 0.30, M.pine, M.linenWhite);
     dresser(group(root, 6.86, 2.00, 90), M, 1.0, 0.95);
@@ -393,15 +403,17 @@ export function buildApartment(M) {
     cyl(hanging, M.shade, 7.95, 2.0, 2.35, 1.9, 0.22, { lines: 0, cast: false, seg: 24 });
     lights.push({ kind: 'room', pos: new THREE.Vector3(7.95, 1.85, 1.9), room: 'child' });
     [0, 1, 2].forEach((i) => bx(root, M.toy[i], 8.97, 9.33, 0, 0.28, 2.50 + i * 0.42, 2.88 + i * 0.42, { lines: 0.4 }));
-    curtain(root, M, 7.12, 7.50, 0.06);
+    curtain(fixedRoot, M, 7.12, 7.50, 0.06);
   }
 
   // =========================================================================
   // LIVING / TV (x 3.20-6.80, z 5.05-8.35) with the bike trainer
   // =========================================================================
   {
+    const root = furn;
     bx(root, M.rug, 4.05, 6.05, 0, 0.012, 5.95, 7.30, { lines: 0.5, cast: false });
-    sofa(group(root, 3.68, 7.00, 90), M, 2.0, 0.95);
+    swap.sofa = group(root, 3.68, 7.00, 90);
+    sofa(swap.sofa, M, 2.0, 0.95);
     // two-tier round side table
     cyl(root, M.oak, 4.80, 0.42, 0.45, 6.70, 0.30, { lines: 0.5, seg: 40 });
     cyl(root, M.oak, 4.80, 0.18, 0.20, 6.70, 0.28, { lines: 0.4, seg: 40 });
@@ -413,19 +425,21 @@ export function buildApartment(M) {
     bx(root, M.screen, 6.765, 6.80, 0.80, 1.51, 6.05, 7.29, { lines: 0.6 });
     bx(root, M.whitePaint, 6.45, 6.80, 0, 0.45, 6.30, 7.04, { lines: 0.5 });
     for (let i = 0; i < 6; i++) bx(root, M.books[i], 6.50, 6.72, 0.03, 0.28 + (i % 3) * 0.03, 6.36 + i * 0.05, 6.40 + i * 0.05, { lines: 0.2 });
-    armchair(group(root, 6.25, 5.55, -45), M);
+    swap.armchair = group(root, 6.25, 5.55, -45);
+    armchair(swap.armchair, M);
     bike(group(root, 5.45, 7.85, 0), M);
-    cyl(hanging, M.shade, 5.0, 2.05, 2.4, 6.7, 0.25, { lines: 0, cast: false, seg: 24, rTop: 0.12 });
+    swap.lamp = cyl(hanging, M.shade, 5.0, 2.05, 2.4, 6.7, 0.25, { lines: 0, cast: false, seg: 24, rTop: 0.12 });
     lights.push({ kind: 'room', pos: new THREE.Vector3(5.0, 1.9, 6.7), room: 'living' });
-    curtain(root, M, 4.64, 4.98, 8.28); curtain(root, M, 5.32, 5.66, 8.28);
-    art(root, M, 3.2, 6.20, 6.85, 1.15, 2.0, 3);
-    art(root, M, 3.2, 7.10, 7.60, 1.30, 1.95, 8);
+    curtain(fixedRoot, M, 4.64, 4.98, 8.28); curtain(fixedRoot, M, 5.32, 5.66, 8.28);
+    art(fixedRoot, M, 3.2, 6.20, 6.85, 1.15, 2.0, 3);
+    art(fixedRoot, M, 3.2, 7.10, 7.60, 1.30, 1.95, 8);
   }
 
   // =========================================================================
   // MASTER (x 0-3.10, z 4.05-8.35)
   // =========================================================================
   {
+    const root = furn;
     bx(root, M.whitePaint, 0, 2.15, 0, 2.36, 4.05, 4.65, { lines: 0.6 });
     for (let i = 0; i < 4; i++) bx(root, M.whitePaint, i * 0.5375 + 0.003, (i + 1) * 0.5375 - 0.003, 0.02, 2.34, 4.65, 4.67, { lines: 0.45 });
     bed(group(root, 0.02, 6.20, 90), M, 1.60, 2.00, 0.30, M.pine, M.gingham);
@@ -438,8 +452,8 @@ export function buildApartment(M) {
     const sg = new THREE.SphereGeometry(0.28, 24, 16);
     addMesh(hanging, sg, M.shade, { lines: 0, cast: false }).position.set(1.4, 2.0, 6.2);
     lights.push({ kind: 'room', pos: new THREE.Vector3(1.4, 1.6, 6.2), room: 'master' });
-    curtain(root, M, 0.42, 0.82, 8.28); curtain(root, M, 2.63, 3.02, 8.28);
-    art(root, M, 0, 5.75, 6.65, 1.30, 1.95, 5);
+    curtain(fixedRoot, M, 0.42, 0.82, 8.28); curtain(fixedRoot, M, 2.63, 3.02, 8.28);
+    art(fixedRoot, M, 0, 5.75, 6.65, 1.30, 1.95, 5);
   }
 
   // =========================================================================
@@ -531,7 +545,7 @@ export function buildApartment(M) {
   }
 
   root.add(outside);
-  return { root, hanging, ceilings, outside, doors, lights };
+  return { root, hanging, ceilings, outside, doors, lights, swap, furn, walls2d };
 }
 
 // ---------------------------------------------------------------------------
@@ -883,3 +897,5 @@ export function buildAnnotations(doors) {
   g.userData.setOpacity = (o) => { fades.forEach((m) => { m.opacity = o; }); g.visible = o > 0.001; };
   return g;
 }
+
+export { addMesh, bx, rbx, cyl, group, chair, trippTrapp, bookcase, dresser, bed, sofa, armchair, bike, plant };

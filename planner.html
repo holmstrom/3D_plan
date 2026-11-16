@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ny Munkegade 80 · Indret selv</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="css/planner.css" />
+  <script type="importmap">
+    { "imports": { "three": "./lib/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <aside class="side">
+    <header>
+      <h1>Ny Munkegade 80</h1>
+      <p>Indret selv · <a href="index.html">se rundturen</a></p>
+    </header>
+
+    <div class="modes" role="tablist">
+      <button id="mode-plan" class="on">Plan</button>
+      <button id="mode-walk">Gå rundt</button>
+    </div>
+    <p class="hint" id="hint"></p>
+
+    <section id="sel" class="card" hidden>
+      <h2 id="sel-name"></h2>
+      <p id="sel-dims" class="dims"></p>
+      <p id="sel-warn" class="warn" hidden>Overlapper en væg eller et andet møbel</p>
+      <div class="row" id="sel-size" hidden>
+        <label>B <input id="sel-w" type="number" min="5" max="600" step="1" /></label>
+        <label>D <input id="sel-d" type="number" min="2" max="600" step="1" /></label>
+        <label>H <input id="sel-h" type="number" min="1" max="250" step="1" /></label>
+      </div>
+      <div class="btns">
+        <button data-act="rot90" title="R">Drej 90°</button>
+        <button data-act="rot180" title="F">Vend 180°</button>
+        <button data-act="rotL" title="Q">−15°</button>
+        <button data-act="rotR" title="E">+15°</button>
+        <button data-act="mirror" title="M">Spejlvend</button>
+        <button data-act="dup" title="Ctrl+D">Kopiér</button>
+        <button data-act="del" title="Delete" class="danger">Slet</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Indsæt møbel</h2>
+      <div id="catalog"></div>
+    </section>
+
+    <section class="card">
+      <h2>Eget møbel med mål</h2>
+      <form id="custom">
+        <label class="full">Navn <input name="name" type="text" maxlength="30" placeholder="Fx ny sofa" required /></label>
+        <div class="row">
+          <label>Bredde <input name="w" type="number" min="5" max="600" step="1" placeholder="cm" required /></label>
+          <label>Dybde <input name="d" type="number" min="2" max="600" step="1" placeholder="cm" required /></label>
+          <label>Højde <input name="h" type="number" min="1" max="250" step="1" placeholder="cm" required /></label>
+        </div>
+        <div class="row">
+          <label>Farve <input name="color" type="color" value="#c9b79a" /></label>
+          <label class="grow">Billede (valgfrit) <input name="img" type="file" accept="image/*" /></label>
+        </div>
+        <p class="err" id="custom-err" hidden></p>
+        <button type="submit">Indsæt</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Indretning</h2>
+      <p class="small" id="save-state">Gemmes automatisk i denne browser.</p>
+      <div class="btns">
+        <button id="export">Eksportér</button>
+        <button id="import">Importér</button>
+        <button id="reset" class="danger">Nulstil til forslag</button>
+      </div>
+      <input id="import-file" type="file" accept="application/json,.json" hidden />
+    </section>
+  </aside>
+
+  <main class="stage">
+    <canvas id="view"></canvas>
+    <div id="labels"></div>
+    <div class="loading" id="loading">Tegner planen…</div>
+  </main>
+
+  <script type="module" src="js/planner.js"></script>
+</body>
+</html>

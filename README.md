@@ -2,7 +2,7 @@
 
 A scroll-driven landing page for the apartment at Ny Munkegade. It opens on the architect's plan. Scrolling raises the walls, brings the camera down to the front door, and walks you into the rooms.
 
-**Live:** https://holmstrom.github.io/3D_plan/
+**Live:** https://holmstrom.github.io/3D_plan/ · planner: https://holmstrom.github.io/3D_plan/planner.html
 
 **Checkpoint 2:** the whole walk.
 
@@ -12,6 +12,15 @@ A scroll-driven landing page for the apartment at Ny Munkegade. It opens on the 
 4. Hall, kitchen/dining, balcony door.
 5. Child's room, living room with TV and bike trainer, master bedroom.
 6. Walls sink back to the cut and the camera rises to the furnished plan.
+
+## Indret selv (`planner.html`)
+
+A small planner on the same model:
+
+- **Plan:** drag furniture, turn it (R 90°, F 180°, Q/E 15°), mirror it (M), copy (Ctrl+D), delete. Arrow keys nudge 5 cm, with Shift 1 cm. The selected piece shows its size and the free distance to the nearest wall or furniture on each side, and turns red when it overlaps something.
+- **Insert:** pick from the catalogue, or add your own piece with name, width, depth and height in cm and an optional photo, which is shown on its front.
+- **Gå rundt:** walk through the rooms at eye height with W A S D or the arrow keys, drag to look around. Double-click the floor on the plan to stand there.
+- The layout is saved in the browser and can be exported to and imported from a JSON file.
 
 ## Run it
 
@@ -42,6 +51,7 @@ There is no build step. three.js, GSAP + ScrollTrigger and Lenis are in `lib/`.
 - `index.html`, `css/style.css`: the page, captions and scroll length.
 - `js/main.js`: renderer, lights, camera path, scroll timeline.
 - `js/model.js`: walls, windows, doors, furniture and plan annotations, in metres.
+- `js/planner.js`, `js/catalog.js`, `planner.html`, `css/planner.css`: the planner and its furniture catalogue.
 - `js/materials.js`: the cut/reveal shader patch and the materials.
 - `assets/tex/`: CC0 textures from Poly Haven. `ash_planks`, `oak_honey`, `linen_neutral` and `cord_weave` are colour-adjusted versions of `oak_wood_planks`, `rough_linen` and `poly_wool_herringbone`.
 - `assets/sky/`: CC0 sky from Poly Haven.

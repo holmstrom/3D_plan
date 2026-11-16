@@ -43,3 +43,5 @@ body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font
 .street small { position: absolute; right: 32px; bottom: 14px; font-size: 10px; letter-spacing: .04em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
 .mark, .captions, .progress { z-index: 3; }
 body.on-street .mark__name, body.on-street .mark__sub { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.55); }
+
+.mark a { color: inherit; pointer-events: auto; }
