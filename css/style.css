@@ -1,0 +1,45 @@
+:root {
+  --paper: #f2eee6;
+  --ink: #1f1d1a;
+  --muted: #6d675d;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--paper); color: var(--ink); }
+body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; }
+
+#view { position: fixed; inset: 0; width: 100vw; height: 100vh; display: block; }
+#scroll { height: 3250vh; }
+
+.mark {
+  position: fixed; top: 28px; left: 32px; z-index: 2; display: grid; gap: 4px;
+  pointer-events: none; transition: opacity .4s;
+}
+.mark__name { font-weight: 600; letter-spacing: .16em; text-transform: uppercase; font-size: 13px; }
+.mark__sub { font-size: 12px; color: var(--muted); letter-spacing: .02em; }
+
+.captions { position: fixed; left: 32px; bottom: 36px; z-index: 2; pointer-events: none; }
+.cap {
+  position: absolute; left: 0; bottom: 0; margin: 0; width: max-content; max-width: 70vw;
+  font-size: 15px; letter-spacing: .02em; opacity: 0; transform: translateY(8px);
+  display: grid; grid-template-columns: auto 1fr; column-gap: 14px; align-items: baseline;
+  padding: 10px 14px; background: rgba(242, 238, 230, .82); backdrop-filter: blur(6px);
+}
+.cap span { font-size: 11px; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); }
+.cap em { grid-column: 2; font-style: normal; font-size: 13px; color: var(--muted); margin-top: 3px; }
+
+.progress { position: fixed; right: 32px; top: 50%; width: 1px; height: 120px; transform: translateY(-50%); background: rgba(31,29,26,.18); z-index: 2; }
+.progress i { position: absolute; left: -1px; top: 0; width: 3px; height: 0; background: var(--ink); }
+
+.loading {
+  position: fixed; inset: 0; display: grid; place-items: center; z-index: 5;
+  background: var(--paper); font-size: 12px; letter-spacing: .2em; text-transform: uppercase; color: var(--muted);
+  transition: opacity .6s;
+}
+.loading.done { opacity: 0; pointer-events: none; }
+
+
+.street { position: fixed; inset: 0; z-index: 1; overflow: hidden; background: var(--paper); }
+.street i { position: absolute; inset: 0; background: url(../assets/img/street.jpg) 50% 45% / cover; transform-origin: 42.5% 44%; will-change: transform; }
+.street small { position: absolute; right: 32px; bottom: 14px; font-size: 10px; letter-spacing: .04em; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,.6); }
+.mark, .captions, .progress { z-index: 3; }
+body.on-street .mark__name, body.on-street .mark__sub { color: #fff; text-shadow: 0 1px 6px rgba(0,0,0,.55); }

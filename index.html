@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ny Munkegade 80</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="lib/lenis.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script type="importmap">
+    { "imports": { "three": "./lib/three.module.min.js" } }
+  </script>
+</head>
+<body>
+  <canvas id="view"></canvas>
+
+  <div class="street"><i></i></div>
+
+  <header class="mark">
+    <span class="mark__name">Ny Munkegade 80</span>
+    <span class="mark__sub">A walk through the new apartment</span>
+  </header>
+
+  <div class="captions">
+    <p class="cap" data-in="-0.4" data-out="-0.1"><span>Scroll</span>Ny Munkegade 80, ground floor · Aarhus</p>
+    <p class="cap" data-in="-0.02" data-out="0.07"><span>Plan</span>The plan is the building, cut at 1.2 m.</p>
+    <p class="cap" data-in="0.38" data-out="0.5"><span>01</span>The front door</p>
+    <p class="cap" data-in="0.56" data-out="0.74"><span>02</span>Hall · 590 × 90</p>
+    <p class="cap" data-in="0.86" data-out="1.10"><span>03</span>Kitchen and dining · 470 × 395<em>Table for six at the window, balcony to the garden</em></p>
+    <p class="cap" data-in="1.13" data-out="1.27"><span>04</span>Balcony · 300 × 130<em>Morning sun, facing the garden</em></p>
+    <p class="cap" data-in="1.66" data-out="1.86"><span>05</span>Child's room · 275 × 395<em>Bed along the wall, the floor free for play</em></p>
+    <p class="cap" data-in="2.16" data-out="2.36"><span>06</span>Living room · 360 × 330<em>Sofa, TV and the bike on its trainer</em></p>
+    <p class="cap" data-in="2.56" data-out="2.72"><span>07</span>Master bedroom · 310 × 430<em>Wardrobe wall by the door, bench under the window</em></p>
+    <p class="cap" data-in="2.90" data-out="3.10"><span>End</span>The same plan, furnished.</p>
+  </div>
+
+  <div class="progress"><i></i></div>
+  <div class="loading">Drawing the plan…</div>
+
+  <main id="scroll" aria-hidden="true"></main>
+
+  <script src="lib/gsap.min.js"></script>
+  <script src="lib/ScrollTrigger.min.js"></script>
+  <script src="lib/lenis.min.js"></script>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
