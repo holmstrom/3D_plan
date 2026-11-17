@@ -3,8 +3,8 @@
 // build(g, M, s) gets the actual size s = { w, d, h }; `resize` lists what the
 // user may change, as [min, max] in metres.
 import * as THREE from 'three';
-import { plainMat } from './materials.js?v=5';
-import { addMesh, bx, cyl, group, chair, trippTrapp, bookcase, dresser, bed, sofa, armchair, bike, plant } from './model.js?v=5';
+import { plainMat } from './materials.js?v=6';
+import { addMesh, bx, cyl, group, chair, trippTrapp, bookcase, dresser, bed, sofa, armchair, bike, plant } from './model.js?v=6';
 
 const legs = (g, mat, w, d, h, t = 0.02, inset = 0.04) => {
   [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {

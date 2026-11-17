@@ -3,9 +3,9 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from '../lib/three-addons/RoomEnvironment.js';
 import { RectAreaLightUniformsLib } from '../lib/three-addons/RectAreaLightUniformsLib.js';
-import { U, buildMaterials, PAPER_HEX } from './materials.js?v=5';
-import { buildApartment, H, W, D } from './model.js?v=5';
-import { CATALOG, byType, buildCustom, PRESETS } from './catalog.js?v=5';
+import { U, buildMaterials, PAPER_HEX } from './materials.js?v=6';
+import { buildApartment, H, W, D } from './model.js?v=6';
+import { CATALOG, byType, buildCustom, PRESETS } from './catalog.js?v=6';
 
 const STORE = 'nm80-layout-v1';      // old single-layout key, migrated on first load
 const STORE2 = 'nm80-planner-v2';
@@ -518,10 +518,12 @@ function applyColors() {
 // --- versions and saving -----------------------------------------------------------------
 let store = { v: 2, current: '', layouts: {} };
 const clone = (o) => JSON.parse(JSON.stringify(o));
+let hadStore = false;
+const restored = [];
 function loadStore() {
   try {
     const d = JSON.parse(localStorage.getItem(STORE2) || 'null');
-    if (d && d.layouts && Object.keys(d.layouts).length) store = d;
+    if (d && d.layouts && Object.keys(d.layouts).length) { store = d; hadStore = true; }
   } catch (e) { /* start fresh */ }
   if (!Object.keys(store.layouts).length) {
     Object.entries(PRESETS).forEach(([n, its]) => { store.layouts[n] = { items: clone(its), colors: {} }; });
@@ -530,6 +532,14 @@ function loadStore() {
       if (old && Array.isArray(old.items) && old.items.length) { store.layouts['Min indretning'] = { items: old.items, colors: {} }; store.current = 'Min indretning'; }
     } catch (e) { /* nothing to migrate */ }
   }
+  // the proposals are always there: a deleted one comes back in its original state
+  const ordered = {};
+  Object.entries(PRESETS).forEach(([n, its]) => {
+    if (store.layouts[n]) ordered[n] = store.layouts[n];
+    else { ordered[n] = { items: clone(its), colors: {} }; if (hadStore) restored.push(n); }
+  });
+  Object.entries(store.layouts).forEach(([n, l]) => { if (!ordered[n]) ordered[n] = l; });
+  store.layouts = ordered;
   if (!store.layouts[store.current]) store.current = Object.keys(store.layouts)[0];
 }
 function fillLayouts() {
@@ -537,7 +547,9 @@ function fillLayouts() {
   s.replaceChildren();
   Object.keys(store.layouts).forEach((n) => { const o = document.createElement('option'); o.value = n; o.textContent = n; s.appendChild(o); });
   s.value = store.current;
-  $('#layout-del').disabled = Object.keys(store.layouts).length < 2;
+  const preset = !!PRESETS[store.current];
+  $('#layout-del').disabled = preset || Object.keys(store.layouts).length < 2;
+  $('#layout-del').title = preset ? 'Forslagene kan ikke slettes. Brug Nulstil for at få det oprindelige forslag tilbage.' : '';
 }
 function openLayout(name) {
   store.current = name;
@@ -584,7 +596,7 @@ function confirmClick(btn, key, label, fn) {
   armed[key] = 0; btn.textContent = label; fn();
 }
 $('#layout-del').onclick = (ev) => confirmClick(ev.target, 'del', 'Slet version', () => {
-  if (Object.keys(store.layouts).length < 2) return;
+  if (PRESETS[store.current] || Object.keys(store.layouts).length < 2) return;
   delete store.layouts[store.current];
   openLayout(Object.keys(store.layouts)[0]); save();
 });
@@ -847,6 +859,7 @@ loadStore();
 resize();
 setMode('plan');
 openLayout(store.current);
+if (restored.length) { save(); flash(`Gendannet: ${restored.join(', ')}`); }
 let last = performance.now(), lastStats = 0;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
