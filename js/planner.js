@@ -3,9 +3,9 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from '../lib/three-addons/RoomEnvironment.js';
 import { RectAreaLightUniformsLib } from '../lib/three-addons/RectAreaLightUniformsLib.js';
-import { U, buildMaterials, PAPER_HEX } from './materials.js?v=6';
-import { buildApartment, H, W, D } from './model.js?v=6';
-import { CATALOG, byType, buildCustom, PRESETS } from './catalog.js?v=6';
+import { U, buildMaterials, PAPER_HEX } from './materials.js?v=7';
+import { buildApartment, H, W, D } from './model.js?v=7';
+import { CATALOG, byType, buildCustom, PRESETS } from './catalog.js?v=7';
 
 const STORE = 'nm80-layout-v1';      // old single-layout key, migrated on first load
 const STORE2 = 'nm80-planner-v2';
@@ -18,9 +18,9 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
 const ROOMS = [
   { id: 'kitchen', name: 'Køkken-alrum', box: [1.80, 0.00, 6.50, 3.95] },
-  { id: 'child', name: 'Børneværelse', box: [6.60, 0.00, 9.35, 3.95] },
-  { id: 'street', name: 'Værelse mod gaden', box: [3.20, 5.05, 6.80, 8.35] },
-  { id: 'master', name: 'Soveværelse', box: [0.00, 4.05, 3.10, 8.35] },
+  { id: 'child', name: 'Haverummet', box: [6.60, 0.00, 9.35, 3.95] },
+  { id: 'street', name: 'Gaderummet', box: [3.20, 5.05, 6.80, 8.35] },
+  { id: 'master', name: 'Det store værelse', box: [0.00, 4.05, 3.10, 8.35] },
   { id: 'hall', name: 'Entré', box: [3.20, 4.05, 9.35, 4.95] },
 ];
 const FLOORS = {
@@ -163,6 +163,14 @@ function corners(it, shrink = 0) {
   const ux = [Math.cos(a), -Math.sin(a)], uz = [Math.sin(a), Math.cos(a)];
   return [[-1, -1], [1, -1], [1, 1], [-1, 1]].map(([sx, sz]) => [it.x + sx * hw * ux[0] + sz * hd * uz[0], it.z + sx * hw * ux[1] + sz * hd * uz[1]]);
 }
+// footprint as one or more polygons: an L-shaped sofa has two parts
+function polysOf(it, shrink = 0) {
+  const def = defOf(it);
+  if (!def.parts) return [corners(it, shrink)];
+  const a = it.rot * D2R, ux = [Math.cos(a), -Math.sin(a)], uz = [Math.sin(a), Math.cos(a)], m = it.mirror ? -1 : 1;
+  return def.parts(def).map(([x0, x1, z0, z1]) => [[x0 + shrink, z0 + shrink], [x1 - shrink, z0 + shrink], [x1 - shrink, z1 - shrink], [x0 + shrink, z1 - shrink]]
+    .map(([lx, lz]) => [it.x + m * lx * ux[0] + lz * uz[0], it.z + m * lx * ux[1] + lz * uz[1]]));
+}
 const rectPoly = (r) => [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]];
 function polysOverlap(A, B) {
   for (const P of [A, B]) {
@@ -185,10 +193,10 @@ const solid = (it) => { const d = defOf(it); return !d.flat && !d.wall; };
 function collides(it) {
   const def = defOf(it);
   if (def.flat) return false;
-  const P = corners(it, def.wall ? 0.03 : 0.012);
-  if (!def.wall && [...WALLS, ...FIXED].some((r) => polysOverlap(P, rectPoly(r)))) return true;
+  const PS = polysOf(it, def.wall ? 0.03 : 0.012);
+  if (!def.wall && [...WALLS, ...FIXED].some((r) => PS.some((P) => polysOverlap(P, rectPoly(r))))) return true;
   if (def.wall) return false;
-  return items.some((o) => o !== it && solid(o) && polysOverlap(P, corners(o, 0.012)));
+  return items.some((o) => o !== it && solid(o) && polysOf(o, 0.012).some((Q) => PS.some((P) => polysOverlap(P, Q))));
 }
 // free distance from each side of the item to the nearest wall or furniture
 function clearances(it) {
@@ -440,7 +448,9 @@ function computeStats() {
     for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
       const dx = (i + 0.5) * CELL - it.x, dz = (j + 0.5) * CELL - it.z;
       const lx = dx * co - dz * si, lz = dx * si + dz * co;
-      const inside = def.round ? lx * lx + lz * lz <= (def.w / 2) ** 2 : Math.abs(lx) <= def.w / 2 && Math.abs(lz) <= def.d / 2;
+      const mx = it.mirror ? -lx : lx;
+      const inside = def.parts ? def.parts(def).some(([x0, x1, z0, z1]) => mx >= x0 && mx <= x1 && lz >= z0 && lz <= z1)
+        : def.round ? lx * lx + lz * lz <= (def.w / 2) ** 2 : Math.abs(lx) <= def.w / 2 && Math.abs(lz) <= def.d / 2;
       if (inside && grid[j * NX + i] === 0) grid[j * NX + i] = 2;
     }
   });
@@ -519,7 +529,7 @@ function applyColors() {
 let store = { v: 2, current: '', layouts: {} };
 const clone = (o) => JSON.parse(JSON.stringify(o));
 let hadStore = false;
-const restored = [];
+const restored = [], added = [];
 function loadStore() {
   try {
     const d = JSON.parse(localStorage.getItem(STORE2) || 'null');
@@ -532,12 +542,14 @@ function loadStore() {
       if (old && Array.isArray(old.items) && old.items.length) { store.layouts['Min indretning'] = { items: old.items, colors: {} }; store.current = 'Min indretning'; }
     } catch (e) { /* nothing to migrate */ }
   }
+  const seen = new Set(store.presetsSeen || ['Forslag A: stue i gadeværelset', 'Forslag B: sofa i køkken-alrum']);
   // the proposals are always there: a deleted one comes back in its original state
   const ordered = {};
   Object.entries(PRESETS).forEach(([n, its]) => {
     if (store.layouts[n]) ordered[n] = store.layouts[n];
-    else { ordered[n] = { items: clone(its), colors: {} }; if (hadStore) restored.push(n); }
+    else { ordered[n] = { items: clone(its), colors: {} }; if (hadStore) (seen.has(n) ? restored : added).push(n); }
   });
+  store.presetsSeen = Object.keys(PRESETS);
   Object.entries(store.layouts).forEach(([n, l]) => { if (!ordered[n]) ordered[n] = l; });
   store.layouts = ordered;
   if (!store.layouts[store.current]) store.current = Object.keys(store.layouts)[0];
@@ -859,7 +871,10 @@ loadStore();
 resize();
 setMode('plan');
 openLayout(store.current);
-if (restored.length) { save(); flash(`Gendannet: ${restored.join(', ')}`); }
+if (restored.length || added.length) {
+  save();
+  flash([added.length ? `${added.length} nye versioner i menuen` : '', restored.length ? `Gendannet: ${restored.join(', ')}` : ''].filter(Boolean).join(' · '));
+}
 let last = performance.now(), lastStats = 0;
 function frame(now) {
   const dt = Math.min(0.05, (now - last) / 1000);
@@ -874,6 +889,6 @@ requestAnimationFrame(frame);
 const ready = new Promise((res) => { THREE.DefaultLoadingManager.onLoad = res; setTimeout(res, 2500); });
 window.__planner = {
   ready: ready.then(() => { $('#loading').classList.add('done'); return true; }),
-  get items() { return items; }, get selected() { return selected; }, get store() { return store; },
+  get items() { return items; }, collides, defOf, openLayout, get selected() { return selected; }, get store() { return store; },
   walk, view, doll, setMode, project, computeStats,
 };

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from '../lib/three-addons/RoomEnvironment.js';
 import { RectAreaLightUniformsLib } from '../lib/three-addons/RectAreaLightUniformsLib.js';
-import { U, buildMaterials, PAPER_HEX } from './materials.js?v=6';
-import { buildApartment, buildAnnotations, ROOMS, H } from './model.js?v=6';
+import { U, buildMaterials, PAPER_HEX } from './materials.js?v=7';
+import { buildApartment, buildAnnotations, ROOMS, H } from './model.js?v=7';
 
 const RECORD = new URLSearchParams(location.search).has('record');
 if (RECORD) document.body.classList.add('record');
